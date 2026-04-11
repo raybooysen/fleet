@@ -45,7 +45,7 @@ If this plugin is published to a GitHub repository:
     "claude-fleet": {
       "source": {
         "source": "github",
-        "repo": "YOUR_USERNAME/claude-fleet"
+        "repo": "raybooysen/fleet"
       }
     }
   }
@@ -66,13 +66,13 @@ Clone the repo and copy into your Claude Code directories:
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/claude-fleet.git
+git clone https://github.com/raybooysen/fleet.git
 
 # Copy agents
-cp claude-fleet/agents/*.md ~/.claude/agents/
+cp fleet/agents/*.md ~/.claude/agents/
 
 # Copy skill
-cp -r claude-fleet/skills/fleet ~/.claude/skills/fleet
+cp -r fleet/skills/fleet ~/.claude/skills/fleet
 ```
 
 ### Option 3: Local plugin (development)
@@ -85,7 +85,7 @@ Point Claude Code at the local directory:
     "claude-fleet": {
       "source": {
         "source": "local",
-        "path": "/path/to/claude-fleet"
+        "path": "/path/to/fleet"
       }
     }
   }
