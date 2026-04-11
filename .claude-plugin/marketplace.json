@@ -1,0 +1,49 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-fleet",
+  "description": "Orchestrated multi-agent team plugin for Claude Code — turns an implementation plan into working code through coordinated phases of architecture, design, API contracts, parallel implementation, code review, devil's advocate challenges, and plan compliance auditing.",
+  "owner": {
+    "name": "Ray Booysen"
+  },
+  "metadata": {
+    "description": "Orchestrated agent team that executes implementation plans through coordinated phases with bounded fix cycles and scoped compliance auditing."
+  },
+  "plugins": [
+    {
+      "name": "claude-fleet",
+      "source": "./",
+      "description": "Orchestrated agent team that executes an implementation plan through coordinated phases. Use after /plan completes. Spawns solution architect, UI/UX designer, API contract designer, frontend/backend engineers, code reviewers, devil's advocates, and a plan compliance auditor.",
+      "version": "2.0.0",
+      "author": {
+        "name": "Ray Booysen"
+      },
+      "homepage": "https://github.com/raybooysen/fleet",
+      "repository": "https://github.com/raybooysen/fleet",
+      "license": "MIT",
+      "keywords": [
+        "claude-code",
+        "agents",
+        "orchestration",
+        "multi-agent",
+        "team",
+        "fleet",
+        "planning",
+        "code-review",
+        "architecture",
+        "workflow",
+        "tdd",
+        "compliance"
+      ],
+      "category": "workflow",
+      "tags": [
+        "agents",
+        "orchestration",
+        "multi-agent",
+        "tdd",
+        "code-review",
+        "workflow"
+      ],
+      "strict": false
+    }
+  ]
+}
