@@ -18,6 +18,14 @@
     "architecture",
     "workflow"
   ],
-  "agents": "./agents",
-  "skills": "./skills"
+  "agents": [
+    "./agents/solution-architect.md",
+    "./agents/uiux-designer.md",
+    "./agents/api-contract-designer.md",
+    "./agents/frontend-engineer.md",
+    "./agents/backend-engineer.md",
+    "./agents/devils-advocate.md",
+    "./agents/plan-compliance-auditor.md"
+  ],
+  "skills": ["./skills/"]
 }
