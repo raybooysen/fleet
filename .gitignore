@@ -1,0 +1,13 @@
+# Fleet runtime artifacts (created during execution)
+.fleet/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
