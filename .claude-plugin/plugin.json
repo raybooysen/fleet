@@ -25,7 +25,8 @@
     "./agents/frontend-engineer.md",
     "./agents/backend-engineer.md",
     "./agents/devils-advocate.md",
-    "./agents/plan-compliance-auditor.md"
+    "./agents/plan-compliance-auditor.md",
+    "./agents/fleet-code-reviewer.md"
   ],
   "skills": ["./skills/"]
 }

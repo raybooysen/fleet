@@ -18,7 +18,7 @@ Execute an implementation plan through a coordinated, multi-phase agent team wit
 
 - A completed implementation plan (from `/plan`, a markdown file, or pasted text)
 - A project codebase to work in
-- Optional: a global `code-reviewer` agent at `~/.claude/agents/code-reviewer.md`. If absent, Phase 4 code review is skipped automatically and only the Devil's Advocate runs against implementations.
+- Optional: a global `code-reviewer` agent at `~/.claude/agents/code-reviewer.md`. If present, the global agent is used for Phase 4 code review. If absent, the bundled `fleet-code-reviewer` agent is used as a fallback — code review always runs.
 
 ## How It Works
 
@@ -73,11 +73,11 @@ mkdir -p .fleet/reviews .fleet/implementations
 Clean up any previous `.fleet/` from a prior run. Write the captured plan verbatim to `.fleet/plan.md`. Every downstream agent reads the plan from this file — do not inline plan text into prompts.
 
 **Step 3: Probe for the global code-reviewer agent.**
-Attempt to Read `~/.claude/agents/code-reviewer.md`. Set an internal flag:
-- If the file exists and is readable: `HAS_GLOBAL_CODE_REVIEWER = true`
-- Otherwise: `HAS_GLOBAL_CODE_REVIEWER = false`
+Attempt to Read `~/.claude/agents/code-reviewer.md`. Set an internal variable:
+- If the file exists and is readable: `CODE_REVIEWER_AGENT = "code-reviewer"` (use the global agent)
+- Otherwise: `CODE_REVIEWER_AGENT = "fleet-code-reviewer"` (use the bundled fallback)
 
-Phase 4 uses this flag to decide whether to spawn the code-reviewer. Record the result so it can be mentioned in the final report.
+Phase 4 always runs code review — this variable determines which agent is used. Record the result so it can be mentioned in the final report.
 
 **Step 4: Announce the default team and defer detailed composition to Phase 1.**
 
@@ -85,7 +85,7 @@ Phase 4 uses this flag to decide whether to spawn the code-reviewer. Record the 
 ## Fleet Initialized
 
 Plan captured at .fleet/plan.md
-Global code-reviewer: [detected | not installed — Phase 4 code review will be skipped]
+Code reviewer: [global ~/.claude/agents/code-reviewer.md detected | using bundled fleet-code-reviewer]
 
 Default team always includes:
 - Solution Architect (Phase 1)
@@ -139,13 +139,12 @@ After any fix cycles are resolved, read the final `## Team Composition` section 
 baseline = 2                       # Phase 1: architect + devil's advocate
          + 2 * D                   # Phase 2: D designers (each + devil's advocate)
          + E                       # Phase 3: E implementation engineers
-         + E * (1 + C)             # Phase 4: E * (devil's advocate + code-reviewer if HAS_GLOBAL_CODE_REVIEWER else 0)
+         + E * 2                   # Phase 4: E * (devil's advocate + code-reviewer) — code review always runs
          + 1                       # Phase 5: compliance auditor
 
 where:
   D = number of activated designers (0, 1, or 2)
   E = total implementation engineers (frontend + backend streams)
-  C = 1 if HAS_GLOBAL_CODE_REVIEWER else 0
 ```
 
 Add a fix-cycle buffer of up to `+4` invocations per artifact that hits the fix cycle (worst case: 2 rounds × 2 re-spawns = 4 extra). Assume ~1 artifact hits the fix cycle on average for the range estimate.
@@ -180,7 +179,7 @@ the global code-reviewer.
 - With fix-cycle buffer: **[N] – [N+4]**
 - Cost tier: **[LOW | MEDIUM | HIGH | VERY HIGH]**
 - Thinking-heavy roles (architect, devil's advocate, compliance) run on opus; implementation roles run on sonnet.
-- Code-reviewer: [will run | skipped — global agent not installed]
+- Code-reviewer: [global agent | bundled fleet-code-reviewer]
 
 Proceed? (yes / modify / abort)
 ```
@@ -269,16 +268,14 @@ For each stream, read `.fleet/implementations/<stream-name>.md` to identify the 
 
 In the spawn templates below, `<stream-name>` is a placeholder — substitute the actual kebab-case stream identifier from `.fleet/architecture.md` (e.g., `frontend-notifications`, `backend-auth`) into both the `description` field and every path in the `prompt` field before spawning. Do not pass the literal string `<stream-name>` to the agent.
 
-**Code Reviewer** (only spawn if `HAS_GLOBAL_CODE_REVIEWER` is true):
+**Code Reviewer** (always runs — uses `CODE_REVIEWER_AGENT` from Phase 0):
 ```
 Agent({
   description: "Code review: <stream-name>",
-  subagent_type: "code-reviewer",
-  prompt: "Review the code changes for the '<stream-name>' work stream. The implementation manifest at .fleet/implementations/<stream-name>.md lists every file created and modified by this engineer — constrain your review to those files only. Cross-check against:\n- .fleet/api-contracts.md (if API work)\n- .fleet/designs.md (if frontend work)\n- .fleet/architecture.md (overall design)\n\nFocus on correctness, security, and test coverage. Write findings to .fleet/reviews/<stream-name>-code-review-v1.md."
+  subagent_type: CODE_REVIEWER_AGENT,
+  prompt: "Review the code changes for the '<stream-name>' work stream. The implementation manifest at .fleet/implementations/<stream-name>.md lists every file created and modified by this engineer — constrain your review to those files only. Cross-check against:\n- .fleet/api-contracts.md (if API work)\n- .fleet/designs.md (if frontend work)\n- .fleet/architecture.md (overall design)\n\nFocus on correctness, contract compliance, error handling, and performance. Write findings to .fleet/reviews/<stream-name>-code-review-v1.md."
 })
 ```
-
-If `HAS_GLOBAL_CODE_REVIEWER` is false, skip this spawn and log `Phase 4: code-reviewer skipped for <stream-name> — global ~/.claude/agents/code-reviewer.md not installed`.
 
 **Devil's Advocate:**
 ```
@@ -324,7 +321,7 @@ Wait for completion. Read `.fleet/compliance-report.md`.
 | Requirements partial | X |
 | Requirements missing | X |
 | Critical review findings open | X |
-| Code-reviewer status | [ran | skipped: global agent not installed] |
+| Code-reviewer | [global agent | bundled fleet-code-reviewer] |
 
 ### What Was Built
 - [Summary from architecture + implementation manifests]
@@ -391,7 +388,7 @@ Agent({
 })
 ```
 
-For Phase 4 implementation fixes, add the code-reviewer re-spawn in parallel with the devil's advocate, also versioned to `<stream-name>-code-review-v<N+1>.md`, and include the previous review path in its prompt. Skip the code-reviewer re-spawn if `HAS_GLOBAL_CODE_REVIEWER` is false.
+For Phase 4 implementation fixes, add the code-reviewer re-spawn (using `CODE_REVIEWER_AGENT`) in parallel with the devil's advocate, also versioned to `<stream-name>-code-review-v<N+1>.md`, and include the previous review path in its prompt.
 
 ### Implementation Engineer Fix Cycle Note
 
@@ -409,7 +406,8 @@ For Phase 4 implementation fixes, the re-spawn prompt for frontend-engineer or b
 | Frontend Engineer       | frontend-engineer       | 3     | Read, Grep, Glob, Write, Edit, Bash| sonnet |
 | Backend Engineer        | backend-engineer        | 3     | Read, Grep, Glob, Write, Edit, Bash| sonnet |
 | Devil's Advocate        | devils-advocate         | 1-4   | Read, Grep, Glob, Write            | opus   |
-| Code Reviewer           | code-reviewer (global)  | 4     | Read, Grep, Glob, Bash             | sonnet |
+| Code Reviewer (global)  | code-reviewer           | 4     | Read, Grep, Glob, Bash             | sonnet |
+| Code Reviewer (bundled) | fleet-code-reviewer     | 4     | Read, Grep, Glob, Write            | sonnet |
 | Plan Compliance Auditor | plan-compliance-auditor | 5     | Read, Grep, Glob, Bash, Write      | opus   |
 
 ## Concurrency Notes
@@ -419,7 +417,7 @@ For Phase 4 implementation fixes, the re-spawn prompt for frontend-engineer or b
 - **Phase 2 (design)**: Run both designers in parallel (max 2).
 - Thinking-heavy roles (Architect, Devil's Advocate, Compliance) use **opus** for depth.
 - Implementation roles (FE/BE Engineers, Designers) use **sonnet** for speed and cost.
-- Code Reviewer uses the global `code-reviewer` agent when available; skipped otherwise.
+- Code Reviewer always runs — uses the global `code-reviewer` agent if installed at `~/.claude/agents/code-reviewer.md`, otherwise falls back to the bundled `fleet-code-reviewer`.
 - Artifact files in `.fleet/` are the communication channel between phases — no direct inter-agent messaging.
 
 ## Cleanup
