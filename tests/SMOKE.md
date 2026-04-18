@@ -6,7 +6,7 @@ Manual end-to-end verification that a change to `skills/fleet/SKILL.md` or any a
 
 - A throwaway test project with some existing code (any stack — the plan fixture is intentionally stack-agnostic in how it describes requirements). A small TypeScript / Next.js / Django / Rails app is ideal.
 - The fleet plugin installed in Claude Code (via local marketplace or copied to `~/.claude`).
-- Optional: global `code-reviewer` at `~/.claude/agents/code-reviewer.md`. Run the smoke test **twice** — once with the global code-reviewer present, once with it temporarily renamed — to exercise both branches of the Phase 0 probe.
+- Optional: global `code-reviewer` at `~/.claude/agents/code-reviewer.md`. If present, Fleet uses it for Phase 4 code review; if absent, the bundled `fleet-code-reviewer` agent runs instead. To exercise both branches, run the smoke test twice — once with the global code-reviewer present, once with it temporarily renamed.
 
 ## Setup
 
@@ -67,8 +67,8 @@ Walk through each item during or after the run. Every box should be checkable.
 ### Phase 4
 
 - [ ] For each stream, `.fleet/reviews/<stream-name>-challenge-v1.md` exists
-- [ ] If `HAS_GLOBAL_CODE_REVIEWER` was true: `.fleet/reviews/<stream-name>-code-review-v1.md` also exists
-- [ ] If `HAS_GLOBAL_CODE_REVIEWER` was false: fleet printed a skip message, and no code-review files exist
+- [ ] `.fleet/reviews/<stream-name>-code-review-v1.md` exists for every stream (code review always runs)
+- [ ] If global code-reviewer was present: review was produced by the global agent; if absent: review was produced by the bundled `fleet-code-reviewer`
 - [ ] Each review references the manifest and only critiques files listed in it
 
 ### Phase 5

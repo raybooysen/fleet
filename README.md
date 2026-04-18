@@ -95,7 +95,7 @@ Point Claude Code at the local directory:
 ## Prerequisites
 
 - **Claude Code** with agent/skill support
-- **Optional: global `code-reviewer` agent** at `~/.claude/agents/code-reviewer.md`. Ships with [Everything Claude Code](https://github.com/affaan-m/everything-claude-code). Fleet probes for this file in Phase 0 and records a `HAS_GLOBAL_CODE_REVIEWER` flag. If absent, Phase 4 code review is skipped automatically and only the devil's advocate runs against each implementation — you'll see the skip noted in the final report.
+- **Optional: global `code-reviewer` agent** at `~/.claude/agents/code-reviewer.md`. Ships with [Everything Claude Code](https://github.com/affaan-m/everything-claude-code). Fleet probes for this file in Phase 0 — if present, the global agent is used for Phase 4 code review; if absent, the bundled `fleet-code-reviewer` agent runs instead. Code review always runs either way.
 
 ## Usage
 
@@ -124,7 +124,7 @@ yes
 2. **Phase 1** — The Solution Architect reads the plan and codebase, then writes `.fleet/architecture.md` including a `## Team Composition` section that names every implementation stream (e.g., `frontend-notifications`, `backend-auth`). Devil's advocate challenges the architecture. You then approve the proposed team with an estimated cost tier.
 3. **Phase 2** — UI/UX Designer and API Contract Designer run in parallel, each challenged by devil's advocate. The API designer cross-checks endpoints against the architecture and flags any deviations.
 4. **Phase 3** — Frontend and backend engineers implement their assigned streams in parallel (batches of up to 4). Each engineer practices strict TDD and writes an **implementation manifest** to `.fleet/implementations/<stream-name>.md` listing every file created, every file modified, every test added, deviations, and open questions.
-5. **Phase 4** — For each stream, a code reviewer (if available) and a devil's advocate review the manifest-scoped files in parallel (batches of up to 6).
+5. **Phase 4** — For each stream, a code reviewer and a devil's advocate review the manifest-scoped files in parallel (batches of up to 6). Code review always runs — using the global `code-reviewer` if installed, otherwise the bundled `fleet-code-reviewer`.
 6. **Phase 5** — The Plan Compliance Auditor derives the set of touched directories from the manifests and runs the test suite scoped to those directories, then verifies every plan requirement was implemented and tested.
 
 At any review step, if CRITICAL findings are found, fleet runs up to 2 bounded fix cycles (re-spawning the original author with the review as input, then re-running the reviewers at versioned paths like `-v2.md`, `-v3.md`). After 2 rounds, remaining CRITICAL issues are surfaced to you to revise, accept, or abort.
@@ -160,9 +160,9 @@ Source artifacts (architecture.md, designs.md, api-contracts.md, implementations
 - **Thinking roles** (Architect, Devil's Advocate, Compliance) use **Opus** for depth
 - **Implementation roles** (Engineers, Designers) use **Sonnet** for speed and cost
 - **Batched parallelism**: Phase 2 runs up to 2 designers, Phase 3 up to 4 engineers per batch, Phase 4 up to 6 reviewers per batch
-- **Estimated invocations** (baseline, no fix cycles): `2 + 2*D + E + E*(1+C) + 1`
-  where `D` = activated designers, `E` = implementation engineers, `C` = 1 if global code-reviewer is installed else 0
-- **Typical runs**: FE + 2 BE modules with both designers and the code-reviewer ≈ 16 baseline invocations, up to ~20 with one fix cycle
+- **Estimated invocations** (baseline, no fix cycles): `2 + 2*D + E + 2*E + 1`
+  where `D` = activated designers, `E` = implementation engineers (code review always runs)
+- **Typical runs**: FE + 2 BE modules with both designers ≈ 16 baseline invocations, up to ~20 with one fix cycle
 - Fleet prints a cost-tier estimate (LOW / MEDIUM / HIGH / VERY HIGH) at the Phase 1 approval step so you can decide before spending
 
 ## License
