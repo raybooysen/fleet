@@ -1,6 +1,6 @@
 {
   "name": "claude-fleet",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Orchestrated agent team that executes implementation plans through coordinated phases — architecture, design, API contracts, parallel implementation, code review, devil's advocate challenges, and plan compliance auditing.",
   "author": {
     "name": "Ray"
